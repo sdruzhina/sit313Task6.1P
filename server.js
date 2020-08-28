@@ -1,13 +1,12 @@
-const express = require("express")
-const bodyParser = require("body-parser")
-const https = require("https")
+const express = require("express");
+const bodyParser = require("body-parser");
 const Requester = require("./models/Requester");
-const mongoose = require("mongoose")
-const validator = require("validator")
+const mongoose = require("mongoose");
+const validator = require("validator");
+const mail = require('./mail');
 
 // Bcrypt
 const bcrypt = require('bcrypt');
-const SALT_ROUNDS = 10;
 
 const app = express()
 // set the view engine to ejs
@@ -57,12 +56,12 @@ app.post('/', async function (req, res) {
 });
 
 // Signup page
-app.get('/reqsignup', (req,res) => {
+app.get('/reqsignup', (req, res) => {
     res.render('reqsignup.ejs', { err: [], data: null });
 })
 
 // Signup form
-app.post('/reqsignup', (req,res) => {
+app.post('/reqsignup', (req, res) => {
     const requester = new Requester({
         country: req.body.country,
         firstName: req.body.firstName,
@@ -80,6 +79,9 @@ app.post('/reqsignup', (req,res) => {
 
     requester.save()
         .catch((err) => res.render('reqsignup.ejs', { err: err, data: requester }));
+
+    // SUbscribe the user to mailing list and send the welcome email (set up in Mailchimp)
+    mail.subscribe(req.body.firstName, req.body.lastName, req.body.email);
 
     if (res.statusCode === 200) {
         res.sendFile(__dirname + '/reqtask.html');
